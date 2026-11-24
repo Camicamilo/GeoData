@@ -1,0 +1,21 @@
+{% extends "core/base.html" %}
+{% block contenido %}
+<h1>Todos los trabajos</h1>
+<div class="grid" style="margin-bottom:1rem">
+  {% for v, l, n in resumen %}<a class="kpi" href="?estado={{ v }}" style="text-decoration:none;color:inherit"><b>{{ n }}</b>{{ l }}</a>{% endfor %}
+</div>
+<div class="card">
+  <p class="muted">{% if filtro %}Filtrando: {{ filtro }} · <a href="{% url 'todos' %}">quitar filtro</a>{% else %}Últimos 200{% endif %}</p>
+  <table>
+    <tr><th>Archivo</th><th>Dueño</th><th>Estado</th><th>Worker</th><th>Intentos</th><th>Creado</th><th></th></tr>
+    {% for j in jobs %}
+    <tr>
+      <td>{{ j.nombre_original }}</td><td>{{ j.owner.username }}</td>
+      <td><span class="e e-{{ j.estado }}">{{ j.get_estado_display }}</span></td>
+      <td class="mono">{{ j.worker|default:"—" }}</td><td>{{ j.intentos }}</td>
+      <td>{{ j.creado|date:"Y-m-d H:i:s" }}</td><td><a href="{% url 'detalle' j.id %}">Ver</a></td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="muted">Sin trabajos.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

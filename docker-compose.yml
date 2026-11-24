@@ -1,0 +1,96 @@
+# AgroLab Sugamuxi · Proyecto final Sistemas Operativos
+# Levantar:   docker compose up -d --build
+# Estado:     docker compose ps   /   docker stats
+# Logs:       docker compose logs -f worker
+
+x-endurecido: &endurecido          # medidas de hardening comunes
+  restart: unless-stopped
+  read_only: true                  # sistema de archivos del contenedor de solo lectura
+  tmpfs: [/tmp]
+  cap_drop: [ALL]                  # sin capacidades del kernel
+  security_opt: [no-new-privileges:true]
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [backend]
+    # SIN "ports:": la base de datos no es accesible desde fuera de la red interna
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt: [no-new-privileges:true]
+
+  web:
+    <<: *endurecido
+    build: ./app
+    image: agrolab-app:latest
+    command: ["web"]
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    volumes:
+      - media:/data/media
+    networks: [backend]
+    depends_on:
+      db: { condition: service_healthy }
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  worker:
+    <<: *endurecido
+    image: agrolab-app:latest
+    command: ["worker"]
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    volumes:
+      - media:/data/media
+    networks: [backend]
+    depends_on:
+      web: { condition: service_healthy }   # web ya aplicó las migraciones
+    # ==== Reto 4: límites de recursos ====
+    # El procesamiento es el único componente con consumo variable: se limita para que
+    # un archivo pesado no deje sin CPU/RAM a la web ni a la base de datos.
+    cpus: "1"
+    mem_limit: 512m
+    stop_grace_period: 30s   # tiempo para terminar el trabajo actual tras SIGTERM
+
+  nginx:
+    <<: *endurecido
+    build: ./nginx
+    image: agrolab-nginx:latest
+    environment:
+      TLS_CN: ${TLS_CN:-agrolab.local}
+    ports:                            # ÚNICOS puertos publicados en el host
+      - "80:8080"
+      - "443:8443"
+    tmpfs: [/tmp, /var/cache/nginx]
+    volumes:
+      - certs:/etc/nginx/certs
+    networks: [frontend, backend]
+    depends_on:
+      web: { condition: service_healthy }
+
+networks:
+  frontend: {}                 # la que conecta nginx con el exterior
+  backend:
+    internal: true             # sin salida a internet: db, web y worker solo se ven entre sí
+
+volumes:
+  pgdata: {}
+  media: {}
+  certs: {}

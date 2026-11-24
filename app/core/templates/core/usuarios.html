@@ -1,0 +1,39 @@
+{% extends "core/base.html" %}
+{% block contenido %}
+<h1>Gestión de usuarios</h1>
+<div class="card">
+  <h2>Nuevo usuario</h2>
+  <form method="post" action="{% url 'usuario_nuevo' %}">
+    {% csrf_token %}
+    <input name="username" placeholder="usuario" required>
+    <input name="password" type="password" placeholder="contraseña (≥10)" required>
+    <select name="rol">{% for v, l in roles %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+    <button>Crear</button>
+  </form>
+</div>
+<div class="card">
+  <table>
+    <tr><th>Usuario</th><th>Rol</th><th>Trabajos</th><th>Último ingreso</th><th>Estado</th></tr>
+    {% for u in usuarios %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td>
+        <form class="inline" method="post" action="{% url 'usuario_rol' u.id %}">{% csrf_token %}
+          <select name="rol" {% if u == user %}disabled{% endif %}>
+            {% for v, l in roles %}<option value="{{ v }}" {% if u.perfil.rol == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
+          </select>
+          {% if u != user %}<button class="btn-sec">Cambiar</button>{% endif %}
+        </form>
+      </td>
+      <td>{{ u.n_jobs }}</td>
+      <td>{{ u.last_login|date:"Y-m-d H:i"|default:"—" }}</td>
+      <td>
+        {% if u.is_active %}activo{% else %}<span style="color:var(--rj)">inactivo</span>{% endif %}
+        {% if u != user %}<form class="inline" method="post" action="{% url 'usuario_activo' u.id %}">{% csrf_token %}
+          <button class="btn-sec">{% if u.is_active %}Desactivar{% else %}Activar{% endif %}</button></form>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

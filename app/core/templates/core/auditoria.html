@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% block contenido %}
+<h1>Auditoría</h1>
+<div class="card">
+  <h2>Reporte: accesos denegados por usuario</h2>
+  <p class="muted">Intentos rechazados (acceso cruzado a archivos ajenos, funciones sin permiso, logins fallidos, cuota, archivos rechazados).</p>
+  <table>
+    <tr><th>Usuario</th><th>Intentos denegados</th><th>Último</th></tr>
+    {% for c in cruzados %}
+    <tr><td><a href="?usuario={{ c.username }}&resultado=DENEGADO">{{ c.username }}</a></td><td>{{ c.intentos }}</td><td>{{ c.ultimo|date:"Y-m-d H:i:s" }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="muted">Sin intentos denegados.</td></tr>{% endfor %}
+  </table>
+</div>
+<div class="card">
+  <form method="get">
+    <input name="usuario" placeholder="usuario" value="{{ filtros.usuario }}">
+    <select name="accion"><option value="">(acción)</option>
+      {% for a in acciones %}<option {% if a == filtros.accion %}selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+    <select name="resultado"><option value="">(resultado)</option>
+      <option {% if filtros.resultado == "PERMITIDO" %}selected{% endif %}>PERMITIDO</option>
+      <option {% if filtros.resultado == "DENEGADO" %}selected{% endif %}>DENEGADO</option></select>
+    <button>Filtrar</button> <a href="{% url 'auditoria' %}">limpiar</a>
+  </form>
+  <table style="margin-top:.8rem">
+    <tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Objeto</th><th>Resultado</th><th>IP</th><th>Detalle</th></tr>
+    {% for e in eventos %}
+    <tr>
+      <td class="mono">{{ e.fecha|date:"Y-m-d H:i:s" }}</td><td>{{ e.username }}</td><td>{{ e.accion }}</td>
+      <td class="mono">{{ e.objeto }}</td><td><span class="e e-{{ e.resultado }}">{{ e.resultado }}</span></td>
+      <td class="mono">{{ e.ip|default:"—" }}</td><td class="muted">{{ e.detalle }}</td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="muted">Sin eventos.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+{% block contenido %}
+<h1>{{ job.nombre_original }}</h1>
+<div class="card">
+  <table>
+    <tr><th>ID</th><td class="mono">{{ job.id }}</td></tr>
+    <tr><th>Dueño</th><td>{{ job.owner.username }}</td></tr>
+    <tr><th>Estado</th><td><span class="e e-{{ job.estado }}">{{ job.get_estado_display }}</span></td></tr>
+    <tr><th>Tamaño</th><td>{{ job.tamano_bytes|filesizeformat }}</td></tr>
+    <tr><th>Creado</th><td>{{ job.creado|date:"Y-m-d H:i:s" }}</td></tr>
+    <tr><th>Iniciado / terminado</th><td>{{ job.iniciado|date:"H:i:s"|default:"—" }} / {{ job.terminado|date:"H:i:s"|default:"—" }}
+      {% if job.duracion %}({{ job.duracion|floatformat:2 }} s){% endif %}</td></tr>
+    <tr><th>Worker / intentos</th><td class="mono">{{ job.worker|default:"—" }} / {{ job.intentos }}</td></tr>
+    {% if job.error %}<tr><th>Error</th><td style="color:var(--rj)">{{ job.error }}</td></tr>{% endif %}
+  </table>
+  <p>
+    {% if job.estado == "completado" and puede_descargar %}<a class="btn" href="{% url 'descargar' job.id %}">Descargar resultado</a>{% endif %}
+    {% if job.estado == "fallido" and puedo.reintentar %}
+      <form class="inline" method="post" action="{% url 'reintentar' job.id %}">{% csrf_token %}<button class="btn-sec">Reintentar</button></form>{% endif %}
+    {% if puedo.eliminar and job.estado != "en_ejecucion" %}
+      <form class="inline" method="post" action="{% url 'eliminar' job.id %}">{% csrf_token %}<button class="btn-rj">Eliminar</button></form>{% endif %}
+  </p>
+</div>
+{% if resultado %}
+<div class="card">
+  <h2>Resultado · {{ resultado.filas }} muestras</h2>
+  <p class="muted">SHA-256: <code>{{ resultado.sha256 }}</code></p>
+  <table>
+    <tr><th>Variable</th><th>Mín</th><th>Máx</th><th>Media</th><th>Desviación</th></tr>
+    {% for var, e in resultado.estadisticas.items %}
+    <tr><td>{{ var }}</td><td>{{ e.min }}</td><td>{{ e.max }}</td><td>{{ e.media }}</td><td>{{ e.desviacion }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

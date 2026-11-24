@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% if refrescar %}<meta http-equiv="refresh" content="3">{% endif %}
+<title>{% block titulo %}GeoData{% endblock %}</title>
+<style>
+  :root{--az:#1f3a68;--vd:#2f7d4f;--gr:#6b7280;--bd:#e3e7ee;--rj:#b42318;--am:#b26b00}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1d2433;background:#f6f8fb}
+  header{background:var(--az);color:#fff;padding:.7rem 1.4rem;display:flex;gap:1.2rem;align-items:center;flex-wrap:wrap}
+  header b{font-size:1.1rem;margin-right:auto} header a{color:#dfe8fb;text-decoration:none} header a:hover{color:#fff}
+  .rol{background:#ffffff22;padding:.15rem .55rem;border-radius:99px;font-size:.8rem}
+  main{max-width:1050px;margin:1.4rem auto;padding:0 1rem}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem}
+  h1{font-size:1.35rem;color:var(--az);margin:.2rem 0 1rem} h2{font-size:1.05rem;color:var(--az);margin:.2rem 0 .7rem}
+  table{width:100%;border-collapse:collapse;font-size:.9rem} th{text-align:left;color:var(--gr);font-weight:600;border-bottom:2px solid var(--bd);padding:.4rem}
+  td{border-bottom:1px solid var(--bd);padding:.4rem;vertical-align:top} code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:.82rem}
+  .e{padding:.1rem .5rem;border-radius:99px;font-size:.78rem;font-weight:600;white-space:nowrap}
+  .e-pendiente{background:#eef2f7;color:#475467}.e-en_ejecucion{background:#fff4dc;color:var(--am)}
+  .e-completado{background:#e5f5ec;color:var(--vd)}.e-fallido{background:#fde8e7;color:var(--rj)}
+  .e-PERMITIDO{background:#e5f5ec;color:var(--vd)}.e-DENEGADO{background:#fde8e7;color:var(--rj)}
+  button,.btn{background:var(--az);color:#fff;border:0;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.88rem;text-decoration:none;display:inline-block}
+  .btn-sec{background:#e8edf5;color:var(--az)} .btn-rj{background:var(--rj)}
+  input,select{padding:.4rem;border:1px solid #c9d1de;border-radius:6px;font-size:.9rem}
+  form.inline{display:inline} .msg{padding:.6rem .9rem;border-radius:6px;margin-bottom:.8rem}
+  .msg.success{background:#e5f5ec;color:var(--vd)} .msg.error{background:#fde8e7;color:var(--rj)}
+  .muted{color:var(--gr);font-size:.85rem} .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem}
+  .kpi{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:.7rem} .kpi b{display:block;font-size:1.5rem;color:var(--az)}
+</style>
+</head>
+<body>
+{% if user.is_authenticated %}
+<header>
+  <b>GeoData</b>
+  <a href="{% url 'inicio' %}">Mis trabajos</a>
+  {% if puedo.ver_todos %}<a href="{% url 'todos' %}">Todos los trabajos</a>{% endif %}
+  {% if puedo.gestionar_usuarios %}<a href="{% url 'usuarios' %}">Usuarios</a>{% endif %}
+  {% if puedo.ver_auditoria %}<a href="{% url 'auditoria' %}">Auditoría</a>{% endif %}
+  <span>{{ user.username }} <span class="rol">{{ rol }}</span></span>
+  <form class="inline" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn-sec">Salir</button></form>
+</header>
+{% endif %}
+<main>
+  {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+  {% block contenido %}{% endblock %}
+</main>
+</body>
+</html>

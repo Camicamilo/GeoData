@@ -1,0 +1,15 @@
+{% extends "core/base.html" %}
+{% block titulo %}Ingresar · GeoData{% endblock %}
+{% block contenido %}
+<div class="card" style="max-width:380px;margin:4rem auto">
+  <h1>GeoData</h1>
+  <p class="muted">Plataforma de análisis de muestras de suelo</p>
+  {% if form.errors %}<div class="msg error">Usuario o contraseña incorrectos.</div>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <p><label>Usuario<br><input name="username" autofocus required style="width:100%"></label></p>
+    <p><label>Contraseña<br><input type="password" name="password" required style="width:100%"></label></p>
+    <button style="width:100%">Ingresar</button>
+  </form>
+</div>
+{% endblock %}

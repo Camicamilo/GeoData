@@ -1,0 +1,29 @@
+{% extends "core/base.html" %}
+{% block contenido %}
+<h1>Mis trabajos</h1>
+<div class="card">
+  <h2>Subir muestras</h2>
+  <form method="post" action="{% url 'subir' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="archivo" accept=".csv" required>
+    <button>Subir y procesar</button>
+  </form>
+  <p class="muted">Solo <code>.csv</code> UTF-8 de hasta {{ max_mb|floatformat:0 }} MB con encabezado
+    <code>muestra_id,ph,humedad,nitrogeno,fosforo</code>.
+    Trabajos activos: <b>{{ activos }}/{{ max_activos }}</b> (máximo simultáneo por usuario).</p>
+</div>
+<div class="card">
+  <table>
+    <tr><th>Archivo</th><th>Estado</th><th>Tamaño</th><th>Creado</th><th></th></tr>
+    {% for j in jobs %}
+    <tr>
+      <td>{{ j.nombre_original }}</td>
+      <td><span class="e e-{{ j.estado }}">{{ j.get_estado_display }}</span></td>
+      <td>{{ j.tamano_bytes|filesizeformat }}</td>
+      <td>{{ j.creado|date:"Y-m-d H:i:s" }}</td>
+      <td><a href="{% url 'detalle' j.id %}">Ver</a></td>
+    </tr>
+    {% empty %}<tr><td colspan="5" class="muted">Aún no has subido archivos.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}
